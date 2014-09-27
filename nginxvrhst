@@ -1,62 +1,79 @@
-action=$1
-domain=$2
-rootdir=$3
-owner=$(who am i | awk '{print $1}')
-sitesEnable='/etc/nginx/sites-enabled/'
-sitesAvailable='/etc/nginx/sites-available/'
-userDir='/var/www/'
- 
-if [ "$(whoami)" != 'root' ]; then
-  	echo "You have no permission to run $0 as non-root user. Use sudo"
-		exit 1;
+#!/bin/bash
+if [ `whoami` = "root" ]; then
+    sleep 1
+else
+    printf "Please run this script as root. Run sudo -i on ubuntu systems\n\n";
+    exit 1
 fi
+
+ACTION=$1
+DOMAIN=$2
+GITREPO=$3
+OWNERUSER=${DOMAIN%.*}
+OWNERGROUP=$OWNERUSER
+ADMINUSER=$(who am i | awk '{print $1}')
+SITESENABLED='/etc/nginx/sites-enabled/'
+SITESAVAILABLE='/etc/nginx/sites-available/'
+WWWDIR='/srv/http/'
  
-if [ "$action" != 'create' ] && [ "$action" != 'delete' ] 
-	then
+if [ "$ACTION" != 'create' ] && [ "$ACTION" != 'delete' ]
+    then
 		echo "You need to prompt for action (create or delete) -- Lower-case only"
 		exit 1;
 fi
  
-while [ "$domain" == ""  ]
+while [ "$DOMAIN" == ""  ]
 do
-	echo -e "Please provide domain. e.g.dev,staging"
-	read  domain
+	echo -e "Please provide domain. e.g. dev,staging"
+	read  DOMAIN
 done
  
-if [ "$rootdir" == "" ]; then
-	rootdir=${domain//./}
-fi
- 
-if [ "$action" == 'create' ] 
-	then
-		### check if domain already exists
-		if [ -e $sitesAvailable$domain ]; then
-			echo -e 'This domain already exists.\nPlease Try Another one'
+if [ "$ACTION" == 'create' ]; then
+		### check if DOMAIN already exists
+		if [ -e $SITESAVAILABLE$DOMAIN ]; then
+			echo -e 'This DOMAIN already exists.\nPlease Try Another one'
 			exit;
 		fi
  
 		### check if directory exists or not
-		if ! [ -d $userDir$rootdir ]; then
+		if ! [ -d $WWWDIR$DOMAIN ]; then
 			### create the directory
-			mkdir $userDir$rootdir
+			mkdir $WWWDIR$DOMAIN
 			### give permission to root dir
-			chmod 755 $userDir$rootdir
-			### write test file in the new domain dir
-			if ! echo "<?php echo phpinfo(); ?>" > $userDir$rootdir/phpinfo.php
+			chmod 755 $WWWDIR$DOMAIN
+			### write test file in the new DOMAIN dir
+			if ! echo "<?php echo phpinfo(); ?>" > $WWWDIR$DOMAIN/phpinfo.php
 			then
-				echo "ERROR: Not able to write in file "$userDir"/"$rootdir"/phpinfo.php. Please check permissions."
+				echo "ERROR: Not able to write in file "$WWWDIR"/"$DOMAIN"/phpinfo.php. Please check permissions."
 				exit;
 			else
-				echo "Added content to "$userDir$rootdir"/phpinfo.php."
+				echo "Added content to "$WWWDIR$DOMAIN"/phpinfo.php."
 			fi
 		fi
- 
+        
+        ### Create domain's user and group
+        adduser --gecos "" --disabled-password $OWNERUSER
+        echo "$OWNERUSER:$OWNERUSER" | chpasswd "$OWNERUSER"
+        sudo usermod -a -G $OWNERGROUP $ADMINUSER
+        
+        ### Create layout for the domain
+        echo "Creating layout for the domain"
+        mkdir -p /home/$OWNERUSER/{cgi-bin,etc/{php5},homes,logs,tmp}
+        find /home/$OWNERUSER -type f -exec chown $OWNERUSER:$OWNERGROUP {} \;
+        find /home/$OWNERUSER -type d -exec chown $OWNERUSER:$OWNERGROUP {} \;
+        find /home/$OWNERUSER -type f -exec chmod 644 {} \;
+        find /home/$OWNERUSER -type d -exec chmod 2775 {} \;
+        ln -s /srv/http/$DOMAIN /home/$OWNERUSER/public_html
+        
+        #sudo find /srv/http/$VIRTUALSERVER_DOM -type f -exec chmod 660 {} \;
+        #sudo find /srv/http/$VIRTUALSERVER_DOM -type d -exec chmod 2770 {} \;
+        
 		### create virtual host rules file
 		if ! echo "server {
 	listen   80;
-	root $userDir$rootdir;
+	root $WWWDIR$DOMAIN;
 	index index.php index.html index.htm;
-	server_name $domain;
+	server_name $DOMAIN;
 
 	# serve static files directly
 	location ~* \.(jpg|jpeg|gif|css|png|js|ico|html)$ {
@@ -94,16 +111,16 @@ if [ "$action" == 'create' ]
 		deny all;
 	}
 
-}" > $sitesAvailable$domain
+}" > $SITESAVAILABLE$DOMAIN
 		then
-			echo -e 'There is an ERROR create $domain file'
+			echo -e 'There is an ERROR create $DOMAIN file'
 			exit;
 		else
 			echo -e '\nNew Virtual Host Created\n'
 		fi
  
-		### Add domain in /etc/hosts
-		if ! echo "127.0.0.1	$domain" >> /etc/hosts
+		### Add DOMAIN in /etc/hosts
+		if ! echo "127.0.0.1	$DOMAIN" >> /etc/hosts
 		then
 			echo "ERROR: Not able write in /etc/hosts"
 			exit;
@@ -111,50 +128,54 @@ if [ "$action" == 'create' ]
 			echo -e "Host added to /etc/hosts file \n"
 		fi
  
-		if [ "$owner" == ""  ]; then
-			chown -R $(whoami):www-data $userDir$rootdir
+		if [ "$ADMINUSER" == ""  ]; then
+			chown -R $(whoami):www-data $WWWDIR$DOMAIN
 		else
-			chown -R $owner:www-data $userDir$rootdir
+			chown -R $ADMINUSER:www-data $WWWDIR$DOMAIN
 		fi
 
 		### enable website
-		ln -s $sitesAvailable$domain $sitesEnable$domain
+		ln -s $SITESAVAILABLE$DOMAIN $SITESENABLED$DOMAIN
  
 		### restart Nginx
 		service nginx restart
  
 		### show the finished message
-		echo -e "Complete! \nYou now have a new Virtual Host \nYour new host is: http://"$domain" \nAnd its located at "$userDir$rootdir
+		echo -e "Complete! \nYou now have a new Virtual Host \nYour new host is: http://"$DOMAIN" \nAnd its located at "$WWWDIR$DOMAIN
 		exit;
-	else
-		### check whether domain already exists
-		if ! [ -e $sitesAvailable$domain ]; then
-			echo -e 'This domain dont exists.\nPlease Try Another one'
+else
+		### check whether DOMAIN already exists
+		if ! [ -e $SITESAVAILABLE$DOMAIN ]; then
+			echo -e 'This DOMAIN dont exists.\nPlease Try Another one'
 			exit;
 		else
-			### Delete domain in /etc/hosts
-			newhost=${domain//./\\.}
+			### Delete DOMAIN in /etc/hosts
+			newhost=${DOMAIN//./\\.}
 			sed -i "/$newhost/d" /etc/hosts
 
 			### disable website
-			rm $sitesEnable$domain
+			rm $SITESENABLED$DOMAIN
 	 
 			### restart Nginx
 			service nginx restart
 
 			### Delete virtual host rules files
-			rm $sitesAvailable$domain
+			rm $SITESAVAILABLE$DOMAIN
 		fi
  
 		### check if directory exists or not
-		if [ -d $userDir$rootdir ]; then
-			echo -e 'Delete host root directory ? (s/n)'
+		if [ -d $WWWDIR$DOMAIN ]; then
+			echo "The user and group $OWNERUSER will be deleted and the following directory will be removed: \n /home/$OWNERUSER, /srv/http/$DOMAIN. Are you sure? (yes/no)"
 			read deldir
 
-			if [ "$deldir" == 's' -o "$deldir" == 'S' ]; then
+			if [ "$deldir" == 'yes' -o "$deldir" == 'yes' ]; then
 				### Delete the directory
-				rm -rf $userDir$rootdir
+				rm -rf $WWWDIR$DOMAIN
+				rm -rf /home/$OWNERUSER
 				echo -e 'Directory deleted'
+                deluser $OWNERUSER
+                deluser --group $OWNERGROUP
+				echo -e 'User deleted'
 			else
 				echo -e 'Host directory conserved'
 			fi
@@ -163,6 +184,6 @@ if [ "$action" == 'create' ]
 		fi
  
 		### show the finished message
-		echo -e "Complete!\nYou just removed Virtual Host "$domain
+		echo -e "Complete!\nYou just removed Virtual Host "$DOMAIN
 		exit 0;
 fi
