@@ -15,11 +15,14 @@ Bash Script for automating nginx virtual hosts creation and deletion.
 
 Basic command line syntax:
 
-    $ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir]
+    $ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional git repo]
     
 With script installed on /usr/local/bin
 
-    $ sudo virtualhost [create | delete] [domain] [optional host_dir]
+    $ sudo virtualhost [create | delete] [domain] [optional git repo]
+    
+This script will create a default user with the domain name without the tld as the username and password.
+The public directory resides in /srv/http/ (e.g. /srv/http/google.com) and symlinked by public_html in home directory.
     
 
 ### Examples ###
@@ -28,14 +31,7 @@ to create a new virtual host:
 
     $ sudo virtualhost create mysite.dev
   
-to create a new virtual host with custom directory name:
-
-    $ sudo virtualhost create anothersite.dev my_dir
-  
 to delete a virtual host
 
     $ sudo virtualhost delete mysite.dev
-  
-to delete a virtual host with custom directory name:
 
-    $ sudo virtualhost delete anothersite.dev my_dir
