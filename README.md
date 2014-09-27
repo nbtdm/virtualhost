@@ -18,7 +18,8 @@ if you copy it without the .sh extension:
 1. Install script for global use
 
         $ cd /tmp && git clone https://github.com/nbtdm/virtualhost.git \
-        sudo cp virtualhost/virtualhost /usr/local/bin/virtualhost && rm -Rf virtualhost
+        && sudo cp virtualhost/virtualhost /usr/local/bin/virtualhost \
+        && sudo chmod 774 /usr/local/bin/virtualhost && rm -Rf virtualhost
 
 
 
