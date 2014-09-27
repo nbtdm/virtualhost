@@ -5,21 +5,9 @@ Bash Script for automating nginx virtual hosts creation and deletion.
 
 ## Installation ##
 
-1. Download the script
-2. Apply permission to execute:
-
-        $ chmod +x /path/to/virtualhost.sh
-  
-3. Optional: if you want to use the script globally, then you need to copy the file to your /usr/local/bin directory, is better
-if you copy it without the .sh extension:
-
-        $ sudo cp /path/to/virtualhost.sh /usr/local/bin/virtualhost
-
-1. Install script for global use
-
-        $ cd /tmp && git clone https://github.com/nbtdm/virtualhost.git \
-        && sudo cp virtualhost/virtualhost /usr/local/bin/virtualhost \
-        && sudo chmod 774 /usr/local/bin/virtualhost && rm -Rf virtualhost
+        $ git clone https://github.com/nbtdm/virtualhost.git /tmp/virtualhost \
+        && sudo cp /tmp/virtualhost/virtualhost /usr/local/bin/virtualhost \
+        && sudo chmod 755 /usr/local/bin/virtualhost && rm -Rf virtualhost
 
 
 
