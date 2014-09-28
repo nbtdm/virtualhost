@@ -5,10 +5,14 @@ Bash Script for automating nginx virtual hosts creation and deletion.
 
 ## Installation ##
 
-        $ git clone https://github.com/nbtdm/virtualhost.git /tmp/virtualhost \
-        && sudo cp /tmp/virtualhost/nginxvrhst /usr/local/bin/nginxvrhstnginxvrhst \
-        && sudo chmod 755 /usr/local/bin/nginxvrhst && rm -Rf /tmp/virtualhost
+1. Download script
 
+        $ git clone https://github.com/nbtdm/virtualhost.git
+
+2. Enable it to be executed globally
+
+        $ sudo mv virtualhost/nginxvrhst /usr/local/bin/nginxvrhst \
+        && sudo chmod 755 /usr/local/bin/nginxvrhst
 
 
 ## Usage ##
