@@ -61,7 +61,7 @@ if [ "$ACTION" == 'create' ]; then
         mkdir -p /home/$OWNERUSER/{cgi-bin,etc/{php5},homes,logs,tmp}
         find /home/$OWNERUSER -type f -exec chown $OWNERUSER:$OWNERGROUP {} \;
         find /home/$OWNERUSER -type d -exec chown $OWNERUSER:$OWNERGROUP {} \;
-        find /home/$OWNERUSER -type f -exec chmod 644 {} \;
+        find /home/$OWNEURusermod not workingSER -type f -exec chmod 644 {} \;
         find /home/$OWNERUSER -type d -exec chmod 2775 {} \;
         ln -s /srv/http/$DOMAIN /home/$OWNERUSER/public_html
         
